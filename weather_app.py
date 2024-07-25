@@ -1,45 +1,40 @@
 import requests
-import json
-
-# Asking user to save weather information into json file
-def saveWeather(data):
-    save = input("\nWould you like to save the weather information? y/n? ")
-    if save == 'y':
-        with open('savedWeather.json', 'w') as new_file:
-            json.dump(data, new_file, indent=4)
-            print("Weather infromation saved to: savedWeather.json")
-    else:
-        print("Not saved")
 
 def get_weather(api_key, city):
-    base_url = "http://api.openweathermap.org/data/2.5/weather"
-    params = {
-        'q': city,
-        'appid': api_key,
-        'units': 'metric'
-    }
+    base_url = "http://api.openweathermap.org/data/2.5/weather?"
+    complete_url = f"{base_url}q={city}&appid={api_key}&units=metric"
     
-    response = requests.get(base_url, params=params)
+    response = requests.get(complete_url)
+    data = response.json()
 
-    if response.status_code == 200:
-        return response.json()
+    if data["cod"] != "404":
+        main = data["main"]
+        weather = data["weather"][0]
+        wind = data["wind"]
+
+        temperature = main["temp"]
+        pressure = main["pressure"]
+        humidity = main["humidity"]
+        description = weather["description"]
+        wind_speed = wind["speed"]
+
+        weather_info = (
+            f"City: {city}\n"
+            f"Temperature: {temperature}°C\n"
+            f"Pressure: {pressure} hPa\n"
+            f"Humidity: {humidity}%\n"
+            f"Description: {description}\n"
+            f"Wind Speed: {wind_speed} m/s"
+        )
+        return weather_info
     else:
-        print(response)
-        return None
+        return "City Not Found"
 
+def main():
+    api_key = "1ab43bda6c8fec81a4552e949b28969e"  # Replace with your OpenWeatherMap API key
+    city = input("Enter city name: ")
+    weather_info = get_weather(api_key, city)
+    print(weather_info)
 
-# Main
 if __name__ == "__main__":
-    api_key = "1ab43bda6c8fec81a4552e949b28969e"
-    city = input("Enter the city name: ")
-    weather_data = get_weather(api_key, city)
-    
-    if weather_data:
-        print(f"City: {weather_data['name']}")
-        print(f"Temperature: {weather_data['main']['temp']}°C")
-        print(f"Weather: {weather_data['weather'][0]['description']}")
-
-        # Asking user to save weather information
-        saveWeather(weather_data)
-    else:
-        print("Error fetching the weather data.")
+    main()
